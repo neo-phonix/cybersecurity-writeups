@@ -1,0 +1,210 @@
+# Username Enumeration via Response Timing (Bypassing IP-Based Brute-Force Protection)
+
+## Lab Information
+
+| Field | Value |
+|-------|-------|
+| Platform | PortSwigger Web Security Academy |
+| Category | Authentication |
+| Difficulty | Apprentice |
+| Tools Used | Burp Suite Community Edition, Burp Repeater, Burp Intruder |
+
+---
+
+## Objective
+
+Identify a valid username by analyzing differences in authentication response times while bypassing IP-based brute-force protection using the `X-Forwarded-For` header. Then identify the correct password and successfully authenticate.
+
+---
+
+## Background
+
+Some applications implement IP-based rate limiting to prevent brute-force attacks. However, if the application trusts the `X-Forwarded-For` header, an attacker can spoof different IP addresses and continue sending requests.
+
+Although the application returned identical login error messages, it leaked information through response timing. Requests using valid usernames consistently took longer because the server performed additional password verification.
+
+This timing difference allowed valid usernames to be identified before attempting password brute forcing.
+
+---
+
+# Methodology
+
+## Step 1 – Capture the Login Request
+
+- Opened the login page.
+- Entered invalid credentials.
+- Intercepted the request using Burp Suite Proxy.
+- Sent the request to Burp Repeater.
+
+---
+
+## Step 2 – Analyze Login Behavior
+
+Tested multiple usernames and passwords.
+
+Observed:
+
+- Multiple failed attempts eventually triggered IP blocking.
+- Login responses displayed the same error message.
+- Response times varied depending on whether the username existed.
+
+---
+
+## Step 3 – Bypass IP-Based Rate Limiting
+
+Added the following header:
+
+```
+X-Forwarded-For: 1
+```
+
+Changed the value for every request:
+
+```
+X-Forwarded-For: 2
+X-Forwarded-For: 3
+X-Forwarded-For: 4
+```
+
+The application trusted this header, allowing each request to appear as if it originated from a different IP address.
+
+This bypassed the brute-force protection.
+
+---
+
+## Step 4 – Identify a Valid Username
+
+Sent the request to Burp Intruder.
+
+Configuration:
+
+- Attack Type: Pitchfork
+- Payload Position 1:
+  - `X-Forwarded-For`
+- Payload Position 2:
+  - `username`
+
+Used:
+
+- Number payload (1–100) for spoofed IP addresses.
+- Username wordlist.
+- A password approximately 100 characters long.
+
+After the attack completed, enabled:
+
+- Response Received
+- Response Completed
+
+One username consistently produced a noticeably longer response time than the others.
+
+This indicated a valid account.
+
+---
+
+## Step 5 – Brute Force the Password
+
+Created a second Pitchfork attack.
+
+Payload positions:
+
+- `X-Forwarded-For`
+- `password`
+
+The valid username identified in the previous step was kept constant.
+
+Configured:
+
+- Payload 1:
+  - Numbers (1–100)
+- Payload 2:
+  - Password wordlist
+
+Most responses returned:
+
+- HTTP 200
+
+One response returned:
+
+- HTTP 302 Found
+
+The HTTP 302 response indicated successful authentication.
+
+---
+
+## Step 6 – Complete the Lab
+
+Logged in using the discovered username and password.
+
+Successfully accessed the user account page and completed the lab.
+
+---
+
+# Why This Works
+
+The application contained two independent security weaknesses:
+
+### 1. Trusted X-Forwarded-For Header
+
+The server relied on the `X-Forwarded-For` header to identify the client's IP address.
+
+By modifying this value for each request, the IP-based rate-limiting mechanism could be bypassed.
+
+### 2. Timing Side Channel
+
+For valid usernames, the application performed additional processing such as:
+
+- Database lookup
+- Password hash verification
+- Account security checks
+
+Invalid usernames were rejected immediately.
+
+This difference created a measurable timing side channel that revealed existing usernames.
+
+---
+
+# Impact
+
+An attacker could:
+
+- Enumerate valid usernames.
+- Bypass IP-based brute-force protection.
+- Perform password brute-force attacks more efficiently.
+- Increase the likelihood of unauthorized account access.
+
+---
+
+# Mitigation
+
+- Do not trust client-supplied `X-Forwarded-For` headers unless they originate from trusted reverse proxies.
+- Apply rate limiting based on trusted server-side client IP information.
+- Return identical responses for both valid and invalid usernames.
+- Ensure authentication processing takes approximately the same amount of time regardless of username validity.
+- Implement account lockout, CAPTCHA, and Multi-Factor Authentication (MFA).
+- Monitor and alert on repeated failed login attempts.
+
+---
+
+# Tools Used
+
+- Burp Suite Proxy
+- Burp Repeater
+- Burp Intruder (Pitchfork Attack)
+
+---
+
+# Skills Learned
+
+- Authentication Testing
+- Username Enumeration
+- Timing Attacks
+- IP Spoofing via X-Forwarded-For
+- Burp Repeater
+- Burp Intruder
+- HTTP Request Analysis
+- Brute Force Testing
+- Rate-Limit Bypass
+
+---
+
+# Screenshots
