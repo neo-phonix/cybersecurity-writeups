@@ -30,7 +30,7 @@ This repository documents my hands-on learning journey through security labs, CT
 | Category       | Lab                                          | Status      |
 | -------------- | -------------------------------------------- | ----------- |
 | Authentication | Username Enumeration via Different Responses | ✅ Completed |
-
+| Authentication | Username Enumeration via Responses timing    | ✅ Completed |
 ---
 
 ## Tools
