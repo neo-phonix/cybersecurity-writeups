@@ -11,7 +11,7 @@ This repository documents my hands-on learning journey through security labs, CT
 * Hack The Box
 * and other labs 
 
-## Topics Covered
+## Topics 
 
 * Authentication
 * SQL Injection
