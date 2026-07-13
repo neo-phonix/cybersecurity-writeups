@@ -7,9 +7,9 @@ This repository documents my hands-on learning journey through security labs, CT
 ## Platforms
 
 * PortSwigger Web Security Academy
-* TryHackMe *(coming soon)*
-* Hack The Box *(coming soon)*
-* picoCTF *(coming soon)*
+* TryHackMe 
+* Hack The Box
+* and other labs 
 
 ## Topics Covered
 
