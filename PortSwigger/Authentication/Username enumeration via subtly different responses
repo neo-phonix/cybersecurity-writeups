@@ -1,0 +1,143 @@
+# Username Enumeration via Subtly Different Responses
+
+## Lab Information
+
+| Field | Value |
+|-------|-------|
+| Platform | PortSwigger Web Security Academy |
+| Category | Authentication |
+| Difficulty | Apprentice |
+| Tools Used | Burp Suite Community Edition, Burp Intruder |
+
+---
+
+## Objective
+
+Identify a valid username by detecting subtle differences in the application's login responses, then determine the correct password to successfully authenticate.
+
+---
+
+## Background
+
+Applications often return generic login error messages such as **"Invalid username or password"** to avoid revealing whether a username exists.
+
+However, small differences in the response body, content length, or formatting may still disclose valid usernames. These subtle inconsistencies can be detected using automated tools such as Burp Suite Intruder.
+
+---
+
+# Methodology
+
+## Step 1 – Capture the Login Request
+
+- Opened the login page.
+- Submitted invalid credentials.
+- Intercepted the POST request using Burp Suite Proxy.
+- Sent the request to Burp Intruder.
+
+---
+
+## Step 2 – Configure Intruder
+
+Configured Intruder with:
+
+- **Attack Type:** Sniper
+- **Payload Position:** `username`
+- **Password:** Fixed to an incorrect value
+- **Payload:** Username wordlist
+
+---
+
+## Step 3 – Launch the Attack
+
+Executed the Intruder attack.
+
+Compared the following response characteristics:
+
+- HTTP Status Code
+- Response Length
+- Error Message
+- Response Body
+
+One username produced a slightly different response compared to the others.
+
+Although the difference was minimal, it indicated that the username existed.
+
+---
+
+## Step 4 – Identify the Password
+
+After identifying the valid username:
+
+- Created another Intruder attack.
+- Kept the username fixed.
+- Used a password wordlist as the payload.
+
+One response returned:
+
+- **HTTP 302 Found**
+
+This indicated successful authentication.
+
+---
+
+## Step 5 – Complete the Lab
+
+Logged in using the identified username and password.
+
+Successfully accessed the user account page and solved the lab.
+
+---
+
+# Why This Works
+
+Although the application attempted to hide account existence by displaying generic error messages, it still generated slightly different responses for valid usernames.
+
+These subtle differences can include:
+
+- Extra whitespace
+- Different response lengths
+- Minor formatting changes
+- Additional characters
+- Slightly different HTML content
+
+Such inconsistencies allow attackers to enumerate valid usernames before attempting password attacks.
+
+---
+
+# Impact
+
+An attacker can:
+
+- Discover valid usernames.
+- Reduce the number of brute-force attempts.
+- Increase the success rate of password attacks.
+- Gather information about existing accounts.
+
+---
+
+# Mitigation
+
+- Return identical responses for all failed login attempts.
+- Keep response sizes consistent.
+- Normalize whitespace and formatting.
+- Prevent information leakage through response content.
+- Implement rate limiting and account lockout.
+- Enable Multi-Factor Authentication (MFA).
+
+---
+
+# Tools Used
+
+- Burp Suite Proxy
+- Burp Suite Intruder
+
+---
+
+# Skills Learned
+
+- Authentication Testing
+- Username Enumeration
+- Burp Suite Intruder
+- HTTP Response Analysis
+- Response Comparison
+- Brute Force Testing
