@@ -4,24 +4,26 @@
 
 | Field | Value |
 |-------|-------|
-| Platform | PortSwigger Web Security Academy |
-| Category | Authentication |
-| Difficulty | Apprentice |
-| Tools Used | Burp Suite Community Edition, Burp Intruder |
+| **Platform** | PortSwigger Web Security Academy |
+| **Category** | Authentication |
+| **Difficulty** | Apprentice |
+| **Tools Used** | Burp Suite Community Edition, Burp Intruder |
 
 ---
 
-## Objective
+# Objective
 
 Identify a valid username by detecting subtle differences in the application's login responses, then determine the correct password to successfully authenticate.
 
 ---
 
-## Background
+# Background
 
-Applications often return generic login error messages such as **"Invalid username or password"** to avoid revealing whether a username exists.
+Many web applications display a generic error message such as **"Invalid username or password."** for both invalid usernames and incorrect passwords to prevent attackers from determining whether an account exists.
 
-However, small differences in the response body, content length, or formatting may still disclose valid usernames. These subtle inconsistencies can be detected using automated tools such as Burp Suite Intruder.
+However, even when the visible error message appears identical, small differences in the server's response can unintentionally reveal valid usernames. These differences may include slight variations in the response body, response length, punctuation, or formatting.
+
+In this lab, Burp Suite Intruder's **Grep - Match** feature was used to identify these subtle differences efficiently.
 
 ---
 
@@ -30,77 +32,105 @@ However, small differences in the response body, content length, or formatting m
 ## Step 1 – Capture the Login Request
 
 - Opened the login page.
-- Submitted invalid credentials.
-- Intercepted the POST request using Burp Suite Proxy.
-- Sent the request to Burp Intruder.
+- Entered invalid credentials.
+- Intercepted the **POST /login** request using Burp Suite Proxy.
+- Sent the request to **Burp Intruder**.
 
 ---
 
 ## Step 2 – Configure Intruder
 
-Configured Intruder with:
+Configured Burp Intruder with:
 
 - **Attack Type:** Sniper
-- **Payload Position:** `username`
+- **Payload Position:** Username parameter
 - **Password:** Fixed to an incorrect value
 - **Payload:** Username wordlist
 
 ---
 
-## Step 3 – Launch the Attack
+## Step 3 – Configure Grep - Match
 
-Executed the Intruder attack.
+To identify subtle response differences:
 
-Compared the following response characteristics:
+- Copied the exact login error message returned by the application.
+
+Example:
+
+```
+Invalid username or password.
+```
+
+- Opened the **Grep - Match** tab in Burp Intruder.
+- Added the copied error message as a match string.
+- Started the Intruder attack.
+
+Using **Grep - Match** made it easier to compare responses automatically instead of manually inspecting every response.
+
+---
+
+## Step 4 – Analyze the Results
+
+After the attack completed, compared:
 
 - HTTP Status Code
 - Response Length
-- Error Message
+- Grep - Match results
 - Response Body
 
-One username produced a slightly different response compared to the others.
+Most usernames returned identical responses.
 
-Although the difference was minimal, it indicated that the username existed.
+However, one username produced a slightly different response. Although the difference was very small, it consistently indicated that the username existed.
+
+This allowed the valid username to be identified.
 
 ---
 
-## Step 4 – Identify the Password
+## Step 5 – Brute Force the Password
 
-After identifying the valid username:
+Created a second Intruder attack.
 
-- Created another Intruder attack.
-- Kept the username fixed.
-- Used a password wordlist as the payload.
+Configuration:
 
-One response returned:
+- Valid username kept constant.
+- Password parameter selected as the payload position.
+- Loaded the password wordlist.
+
+Executed the attack.
+
+Most requests returned:
+
+- **HTTP 200 OK**
+
+One request returned:
 
 - **HTTP 302 Found**
 
-This indicated successful authentication.
+The HTTP 302 response indicated successful authentication.
 
 ---
 
-## Step 5 – Complete the Lab
+## Step 6 – Complete the Lab
 
 Logged in using the identified username and password.
 
-Successfully accessed the user account page and solved the lab.
+Successfully accessed the user account page and completed the PortSwigger lab.
 
 ---
 
 # Why This Works
 
-Although the application attempted to hide account existence by displaying generic error messages, it still generated slightly different responses for valid usernames.
+Although the application attempted to prevent username enumeration by displaying the same error message for every failed login attempt, the server still generated slightly different responses for valid usernames.
 
-These subtle differences can include:
+These differences can include:
 
+- Different punctuation
 - Extra whitespace
+- Small HTML variations
 - Different response lengths
-- Minor formatting changes
-- Additional characters
-- Slightly different HTML content
+- Additional hidden content
 
-Such inconsistencies allow attackers to enumerate valid usernames before attempting password attacks.
+By using **Grep - Match**, these subtle differences become easier to identify, allowing attackers to determine which usernames exist.
 
 ---
 
@@ -108,21 +138,24 @@ Such inconsistencies allow attackers to enumerate valid usernames before attempt
 
 An attacker can:
 
-- Discover valid usernames.
+- Enumerate valid usernames.
 - Reduce the number of brute-force attempts.
-- Increase the success rate of password attacks.
-- Gather information about existing accounts.
+- Increase the effectiveness of credential stuffing attacks.
+- Gather information about existing user accounts.
 
 ---
 
 # Mitigation
 
+To prevent this vulnerability:
+
 - Return identical responses for all failed login attempts.
-- Keep response sizes consistent.
+- Ensure response bodies are exactly the same.
 - Normalize whitespace and formatting.
-- Prevent information leakage through response content.
-- Implement rate limiting and account lockout.
+- Avoid differences in punctuation or hidden HTML.
+- Implement rate limiting and account lockout mechanisms.
 - Enable Multi-Factor Authentication (MFA).
+- Monitor repeated failed login attempts.
 
 ---
 
@@ -130,6 +163,7 @@ An attacker can:
 
 - Burp Suite Proxy
 - Burp Suite Intruder
+- Grep - Match
 
 ---
 
@@ -137,7 +171,13 @@ An attacker can:
 
 - Authentication Testing
 - Username Enumeration
+- Burp Suite Proxy
 - Burp Suite Intruder
+- Grep - Match Analysis
 - HTTP Response Analysis
 - Response Comparison
-- Brute Force Testing
+- Password Brute Forcing
+
+# Key Takeaway
+
+This lab demonstrates that even when an application returns generic authentication error messages, subtle differences in server responses can still reveal valid usernames. Burp Suite Intruder's **Grep - Match** feature helps identify these inconsistencies efficiently, enabling attackers to enumerate accounts before launching password attacks. Eliminating response differences and implementing robust authentication controls are essential to mitigating this vulnerability.
